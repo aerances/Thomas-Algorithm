@@ -181,7 +181,13 @@
                             {% for i in range(result['x']|length) %}
                             <tr>
                                 <td><strong>x_{{ i+1 }}</strong></td>
-                                <td>{{ "%.4f"|format(result['gamma'][i]) if i < (result['x']|length - 1) else '0.0000' }}</td>
+                                <td>
+                                    {% if i < (result['x']|length - 1) %}
+                                        {{ "%.4f"|format(result['gamma'][i]) }}
+                                    {% else %}
+                                        0.0000
+                                    {% endif %}
+                                </td>
                                 <td>{{ "%.4f"|format(result['rho'][i]) }}</td>
                                 <td><span style="color:#0b3d91; font-weight:bold;">{{ "%.4f"|format(result['x'][i]) }}</span></td>
                             </tr>
