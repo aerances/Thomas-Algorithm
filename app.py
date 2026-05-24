@@ -104,5 +104,10 @@ def home():
             error = "Invalid numerical configuration setup!"
     return render_template('index.html', result=result, error=error, inputs=inputs, steps=steps)
 
+# ... keep all your code above exactly the same ...
+
+# Make sure this is explicitly exposed for Vercel
+app = app
+
 if __name__ == '__main__':
     app.run(debug=True)
