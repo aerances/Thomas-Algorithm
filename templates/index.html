@@ -1,171 +1,113 @@
+from flask import Flask, render_template, request
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thomas Algorithm Matrix System Solver</title>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <style>
-        body { margin: 0; padding: 0; background: #f4f7fb; font-family: Arial, sans-serif; color: #222; }
-        .container { width: 85%; margin: auto; padding: 30px 0; }
-        h1 { text-align: center; color: #0b3d91; margin-bottom: 40px; font-size: 36px; }
-        h2 { color: #0b3d91; margin-bottom: 20px; border-bottom: 2px solid #0b3d91; padding-bottom: 5px; }
-        .card { background: white; padding: 30px; margin-bottom: 30px; border-radius: 15px; box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.08); line-height: 1.8; }
-        .example-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .example-box { background: #fafbfc; border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
-        .tridiagonal-container { max-width: 550px; margin: 30px auto; background: #fafbfc; padding: 20px; border-radius: 10px; border: 1px dashed #0b3d91; }
-        .matrix-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; align-items: center; }
-        .matrix-row input { width: 75px; height: 45px; border: 1px solid #ccc; border-radius: 8px; text-align: center; font-size: 16px; }
-        .matrix-row input[readonly] { background: #eef; color: #aaa; cursor: not-allowed; }
-        .row-lbl { font-weight: bold; width: 60px; color: #555; }
-        button { display: block; margin: 20px auto 0 auto; padding: 14px 28px; border: none; border-radius: 10px; background: #0b3d91; color: white; font-size: 17px; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #062c6b; transform: scale(1.02); }
-        .step-heading { font-weight: bold; color: #0b3d91; margin-top: 20px; border-bottom: 1px dashed #ccc; padding-bottom: 6px; font-size: 18px; }
-        .sub-step-heading { font-weight: bold; color: #444; margin-top: 10px; font-size: 15px; }
-        .math-step { background: rgba(11, 61, 145, 0.04); padding: 5px 12px; border-radius: 6px; margin: 8px 0; border-left: 4px solid #0b3d91; }
-        .info-box { background: #e2f0d9; color: #385723; border-left: 4px solid #70ad47; padding: 12px; border-radius: 6px; margin: 15px 0; font-weight: bold; }
-        .error { margin-top: 20px; color: red; font-weight: bold; text-align: center; background: #fdf2f2; padding: 15px; border-radius: 8px; border: 1px solid #f5b0b0; }
-        .sol-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .sol-table th, .sol-table td { border: 1px solid #ddd; padding: 12px; text-align: center; }
-        .sol-table th { background-color: #0b3d91; color: white; }
-    </style>
-</head>
-<body>
+app = Flask(__name__)
 
-<div class="container">
-    <h1>Thomas Algorithm (Tridiagonal Matrix Solver)</h1>
-
-    <div class="card">
-        <h2>1. Mathematical Discussion</h2>
-        <p>The <strong>Thomas Algorithm</strong> is an optimized variant of Gaussian elimination engineered to solve tridiagonal linear equation systems of the shape \(Mx = r\).</p>
+def check_diagonal_dominance(a, b, c):
+    n = len(b)
+    violations = []
+    
+    for i in range(n):
+        sub_val = abs(a[i]) if i > 0 else 0.0
+        super_val = abs(c[i]) if i < n - 1 else 0.0
+        diag_val = abs(b[i])
         
-        $$M = \begin{pmatrix} 
-        b_1 & c_1 & 0 & \dots & 0 \\ 
-        a_2 & b_2 & c_2 & \dots & 0 \\ 
-        0 & a_3 & b_3 & \dots & 0 \\ 
-        \vdots & \vdots & \vdots & \ddots & c_{n-1} \\ 
-        0 & 0 & 0 & a_n & b_n 
-        \end{pmatrix}$$
-
-        <p>The system is numerically stable if it satisfies the condition of strict diagonal dominance:</p>
-        $$\lvert b_i \rvert \geq \lvert a_i \rvert + \lvert c_i \rvert \quad \text{for all } i$$
-    </div>
-
-    <div class="card">
-        <h2>2. Step-by-Step Worked Examples (Static Reference)</h2>
-        <div class="example-split">
+        if diag_val < (sub_val + super_val):
+            violations.append("Row %d (|%.2f| < |%.2f| + |%.2f|)" % (i+1, b[i], sub_val, super_val))
             
-            <div class="example-box">
-                <h3>Example 1: Symmetric Dominant System</h3>
-                <p>Consider a $3 \times 3$ system where:</p>
-                $$b = [2, 2, 2], \quad a = [0, -1, -1], \quad c = [-1, -1, 0], \quad r = [1, 0, 1]$$
-                <strong>Solution Set:</strong> \(X = [1.00, 1.00, 1.00]\)</p>
-            </div>
+    if violations:
+        msg = "Warning: The system is not strictly diagonally dominant at: " + ", ".join(violations) + ". The algorithm may become unstable."
+        return False, msg
+    return True, "Success: Matrix passes strict diagonal dominance checks."
 
-            <div class="example-box">
-                <h3>Example 2: Non-Symmetric System</h3>
-                <p>Consider a $3 \times 3$ system where:</p>
-                $$b = [4, 4, 4], \quad a = [0, -1, -2], \quad c = [-2, -1, 0], \quad r = [2, 5, 2]$$
-                <strong>Solution Set:</strong> \(X = [1.50, 2.00, 1.50]\)</p>
-            </div>
+def thomas_algorithm_with_steps(a, b, c, r):
+    n = len(b)
+    gamma = [0.0] * n
+    rho = [0.0] * n
+    x = [0.0] * n
+    steps = []
 
-        </div>
-    </div>
+    is_dominant, dominance_msg = check_diagonal_dominance(a, b, c)
+    steps.append({"type": "info", "text": dominance_msg})
 
-    <div class="card">
-        <h2>3. Interactive $4 \times 4$ Tridiagonal Matrix Calculator</h2>
-        <form method="POST">
-            <div class="tridiagonal-container">
-                <div class="matrix-row">
-                    <div class="row-lbl">Row 1:</div>
-                    <input type="text" readonly value="0">
-                    <input type="number" step="any" name="b1" value="{{ inputs['b1'] }}" required>
-                    <input type="number" step="any" name="c1" value="{{ inputs['c1'] }}" required>
-                    <input type="text" readonly value="0">
-                    <div style="font-weight:bold; margin: 0 5px;">=</div>
-                    <input type="number" step="any" name="r1" value="{{ inputs['r1'] }}" required>
-                </div>
-                <div class="matrix-row">
-                    <div class="row-lbl">Row 2:</div>
-                    <input type="number" step="any" name="a2" value="{{ inputs['a2'] }}" required>
-                    <input type="number" step="any" name="b2" value="{{ inputs['b2'] }}" required>
-                    <input type="number" step="any" name="c2" value="{{ inputs['c2'] }}" required>
-                    <input type="text" readonly value="0">
-                    <div style="font-weight:bold; margin: 0 5px;">=</div>
-                    <input type="number" step="any" name="r2" value="{{ inputs['r2'] }}" required>
-                </div>
-                <div class="matrix-row">
-                    <div class="row-lbl">Row 3:</div>
-                    <input type="text" readonly value="0">
-                    <input type="number" step="any" name="a3" value="{{ inputs['a3'] }}" required>
-                    <input type="number" step="any" name="b3" value="{{ inputs['b3'] }}" required>
-                    <input type="number" step="any" name="c3" value="{{ inputs['c3'] }}" required>
-                    <div style="font-weight:bold; margin: 0 5px;">=</div>
-                    <input type="number" step="any" name="r3" value="{{ inputs['r3'] }}" required>
-                </div>
-                <div class="matrix-row">
-                    <div class="row-lbl">Row 4:</div>
-                    <input type="text" readonly value="0">
-                    <input type="text" readonly value="0">
-                    <input type="number" step="any" name="a4" value="{{ inputs['a4'] }}" required>
-                    <input type="number" step="any" name="b4" value="{{ inputs['b4'] }}" required>
-                    <div style="font-weight:bold; margin: 0 5px;">=</div>
-                    <input type="number" step="any" name="r4" value="{{ inputs['r4'] }}" required>
-                </div>
-            </div>
-            <button type="submit">Compute Thomas Algorithm</button>
-        </form>
+    steps.append({"type": "header", "text": "Stage 1: Forward Sweep (Computing Gamma and Rho vectors)"})
+    steps.append({"type": "sub-header", "text": "Processing Row 1"})
+    
+    if b[0] == 0.0:
+        raise ValueError("Calculation Halt: Diagonal element b_1 is exactly zero. Cannot initialize forward substitution sweep.")
+        
+    gamma[0] = c[0] / b[0]
+    rho[0] = r[0] / b[0]
+    
+    steps.append({"type": "equation", "text": r"$$\gamma_1 = \frac{c_1}{b_1} = \frac{%.2f}{%.2f} = %.4f$$" % (c[0], b[0], gamma[0])})
+    steps.append({"type": "equation", "text": r"$$\rho_1 = \frac{r_1}{b_1} = \frac{%.2f}{%.2f} = %.4f$$" % (r[0], b[0], rho[0])})
 
-        {% if error %}
-            <div class="error">
-                <strong>Process Terminated:</strong> {{ error }}
-            </div>
-        {% endif %}
+    for i in range(1, n - 1):
+        steps.append({"type": "sub-header", "text": "Processing Row %d" % (i+1)})
+        denom = b[i] - a[i] * gamma[i-1]
+        
+        if denom == 0.0:
+            raise ValueError("Halt: Division by zero encountered at diagonal position %d." % (i+1))
+            
+        gamma[i] = c[i] / denom
+        rho[i] = (r[i] - a[i] * rho[i-1]) / denom
+        
+        steps.append({"type": "equation", "text": r"$$\gamma_{%d} = \frac{c_{%d}}{b_{%d} - a_{%d} \gamma_{%d}} = \frac{%.2f}{%.2f - (%.2f \times %.2f)} = %.4f$$" % (i+1, i+1, i+1, i+1, i, c[i], b[i], a[i], gamma[i-1], gamma[i])})
+        steps.append({"type": "equation", "text": r"$$\rho_{%d} = \frac{r_{%d} - a_{%d} \rho_{%d}}{b_{%d} - a_{%d} \gamma_{%d}} = \frac{%.2f - (%.2f \times %.2f)}{%.2f - (%.2f \times %.2f)} = %.4f$$" % (i+1, i+1, i+1, i, i+1, i+1, i, r[i], a[i], rho[i-1], b[i], a[i], gamma[i-1], rho[i])})
 
-        {% if result %}
-            <div class="card" style="margin-top: 30px; border: 1px solid #0b3d91;">
-                <h3>Full Computation Trace</h3>
-                
-                {% for step in steps %}
-                    {% if step.type == 'header' %}
-                        <div class="step-heading">{{ step.text }}</div>
-                    {% elif step.type == 'sub-header' %}
-                        <div class="sub-step-heading">{{ step.text }}</div>
-                    {% elif step.type == 'info' %}
-                        <div class="info-box">{{ step.text }}</div>
-                    {% else %}
-                        <div class="math-step">{{ step.text }}</div>
-                    {% endif %}
-                {% endfor %}
+    steps.append({"type": "sub-header", "text": "Processing Final Row %d" % n})
+    denom_n = b[n-1] - a[n-1] * gamma[n-2]
+    if denom_n == 0.0:
+        raise ValueError("Halt: Division by zero encountered at the final row.")
+    
+    gamma[n-1] = 0.0
+    rho[n-1] = (r[n-1] - a[n-1] * rho[n-2]) / denom_n
+    
+    steps.append({"type": "equation", "text": r"$$\rho_{%d} = \frac{r_{%d} - a_{%d} \rho_{%d}}{b_{%d} - a_{%d} \gamma_{%d}} = \frac{%.2f - (%.2f \times %.2f)}{%.2f - (%.2f \times %.2f)} = %.4f$$" % (n, n, n, n-1, n, n, n-1, r[n-1], a[n-1], rho[n-2], b[n-1], a[n-1], gamma[n-2], rho[n-1])})
 
-                <div style="background: #f8fafc; border-top: 2px solid #0b3d91; padding: 20px; margin-top: 25px;">
-                    <h3>Calculated Solution Vector Results</h3>
-                    <table class="sol-table">
-                        <thead>
-                            <tr>
-                                <th>Variable</th>
-                                <th>Intermediate Value (\(\gamma\))</th>
-                                <th>Intermediate Solution (\(\rho\))</th>
-                                <th>Final Value (\(x\))</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for i in range(result['x']|length) %}
-                            <tr>
-                                <td><strong>x_{{ i+1 }}</strong></td>
-                                <td>{{ "%.4f"|format(result['gamma'][i]) if i < (result['x']|length - 1) else '0.0000' }}</td>
-                                <td>{{ "%.4f"|format(result['rho'][i]) }}</td>
-                                <td><span style="color:#0b3d91; font-weight:bold;">{{ "%.4f"|format(result['x'][i]) }}</span></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        {% endif %}
-    </div>
-</div>
+    steps.append({"type": "header", "text": "Stage 2: Backward Substitution (Upward Sweep)"})
+    
+    x[n-1] = rho[n-1]
+    steps.append({"type": "equation", "text": r"$$x_{%d} = \rho_{%d} = %.4f$$" % (n, n, x[n-1])})
 
-</body>
-</html>
+    for i in range(n - 2, -1, -1):
+        x[i] = rho[i] - gamma[i] * x[i+1]
+        steps.append({"type": "equation", "text": r"$$x_{%d} = \rho_{%d} - \gamma_{%d} x_{%d} = %.2f - (%.2f \times %.4f) = %.4f$$" % (i+1, i+1, i+1, i+2, rho[i], gamma[i], x[i+1], x[i])})
+
+    return gamma, rho, x, steps
+
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    result = None
+    error = None
+    steps = None
+    
+    inputs = {
+        'b1': 2.0,  'c1': -1.0, 'r1': 1.0,
+        'a2': -1.0, 'b2': 2.0,  'c2': -1.0, 'r2': 0.0,
+        'a3': -1.0, 'b3': 2.0,  'c3': -1.0, 'r3': 0.0,
+        'a4': -1.0, 'b4': 2.0,  'r4': 1.0
+    }
+
+    if request.method == 'POST':
+        try:
+            for key in inputs.keys():
+                inputs[key] = float(request.form.get(key, 0.0))
+            
+            a = [0.0, inputs['a2'], inputs['a3'], inputs['a4']]
+            b = [inputs['b1'], inputs['b2'], inputs['b3'], inputs['b4']]
+            c = [inputs['c1'], inputs['c2'], inputs['c3'], 0.0]
+            r = [inputs['r1'], inputs['r2'], inputs['r3'], inputs['r4']]
+            
+            gamma, rho, x, calculated_steps = thomas_algorithm_with_steps(a, b, c, r)
+            result = {'gamma': gamma, 'rho': rho, 'x': x}
+            steps = calculated_steps
+            
+        except ValueError as ve:
+            error = str(ve)
+        except Exception as e:
+            error = "Calculation Error: " + str(e)
+
+    return render_template('index.html', result=result, error=error, inputs=inputs, steps=steps)
+
+if __name__ == '__main__':
+    app.run(debug=True)
