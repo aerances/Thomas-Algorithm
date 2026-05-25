@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request
 
 app = Flask(__name__)
@@ -39,7 +38,6 @@ def thomas_algorithm_with_steps(a, b, c, r):
     gamma[0] = c[0] / b[0]
     rho[0] = r[0] / b[0]
     
-    # Changed delimiters to $$ for flawless MathJax parsing
     steps.append({"type": "equation", "text": r"$$\gamma_1 = \frac{c_1}{b_1} = \frac{%.2f}{%.2f} = %.4f$$" % (c[0], b[0], gamma[0])})
     steps.append({"type": "equation", "text": r"$$\rho_1 = \frac{r_1}{b_1} = \frac{%.2f}{%.2f} = %.4f$$" % (r[0], b[0], rho[0])})
 
@@ -53,7 +51,6 @@ def thomas_algorithm_with_steps(a, b, c, r):
         gamma[i] = c[i] / denom
         rho[i] = (r[i] - a[i] * rho[i-1]) / denom
         
-        # Changed delimiters to $$ for flawless MathJax parsing
         steps.append({"type": "equation", "text": r"$$\gamma_{%d} = \frac{c_{%d}}{b_{%d} - a_{%d} \gamma_{%d}} = \frac{%.2f}{%.2f - (%.2f \times %.2f)} = %.4f$$" % (i+1, i+1, i+1, i+1, i, c[i], b[i], a[i], gamma[i-1], gamma[i])})
         steps.append({"type": "equation", "text": r"$$\rho_{%d} = \frac{r_{%d} - a_{%d} \rho_{%d}}{b_{%d} - a_{%d} \gamma_{%d}} = \frac{%.2f - (%.2f \times %.2f)}{%.2f - (%.2f \times %.2f)} = %.4f$$" % (i+1, i+1, i+1, i, i+1, i+1, i, r[i], a[i], rho[i-1], b[i], a[i], gamma[i-1], rho[i])})
 
@@ -65,7 +62,6 @@ def thomas_algorithm_with_steps(a, b, c, r):
     gamma[n-1] = 0.0
     rho[n-1] = (r[n-1] - a[n-1] * rho[n-2]) / denom_n
     
-    # Changed delimiters to $$ for flawless MathJax parsing
     steps.append({"type": "equation", "text": r"$$\rho_{%d} = \frac{r_{%d} - a_{%d} \rho_{%d}}{b_{%d} - a_{%d} \gamma_{%d}} = \frac{%.2f - (%.2f \times %.2f)}{%.2f - (%.2f \times %.2f)} = %.4f$$" % (n, n, n, n-1, n, n, n-1, r[n-1], a[n-1], rho[n-2], b[n-1], a[n-1], gamma[n-2], rho[n-1])})
 
     steps.append({"type": "header", "text": "Stage 2: Backward Substitution (Upward Sweep)"})
