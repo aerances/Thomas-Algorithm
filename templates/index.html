@@ -100,7 +100,7 @@
 
     <div class="card">
         <h2>3. Interactive 4 &times; 4 Tridiagonal Matrix Calculator</h2>
-        <p>Input values into your active tridiagonal structural positions (\(a\) for sub-diagonal, \(b\) for main diagonal, \(c\) for super-diagonal) alongside right-hand solution elements (\(r\)):</p>
+        <p>Input values into your active tridiagonal structural positions (\(a\) for sub-diagonal, \(b\) for main diagonal, \(c\) for super-diagonal) alongside right-hand solution elements (\(r\))</p>
         
         <form method="POST">
             <div class="tridiagonal-container">
@@ -180,7 +180,7 @@
                         <tbody>
                             {% for i in range(result['x']|length) %}
                             <tr>
-                                <td><strong>x_{{ i+1 }}</strong></td>
+                                <td><strong>\(x_{{ i+1 }}\)</strong></td>
                                 <td>{{ "%.4f"|format(result['gamma'][i]) if i < (result['x']|length - 1) else '0.0000' }}</td>
                                 <td>{{ "%.4f"|format(result['rho'][i]) }}</td>
                                 <td><span style="color:#0b3d91; font-weight:bold;">{{ "%.4f"|format(result['x'][i]) }}</span></td>
