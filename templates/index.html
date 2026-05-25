@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,7 +23,7 @@
         button:hover { background: #062c6b; transform: scale(1.02); }
         .step-heading { font-weight: bold; color: #0b3d91; margin-top: 20px; border-bottom: 1px dashed #ccc; padding-bottom: 6px; font-size: 18px; }
         .sub-step-heading { font-weight: bold; color: #444; margin-top: 10px; font-size: 15px; }
-        .math-step { background: rgba(11, 61, 145, 0.04); padding: 12px; border-radius: 6px; margin: 8px 0; border-left: 4px solid #0b3d91; }
+        .math-step { background: rgba(11, 61, 145, 0.04); padding: 5px 12px; border-radius: 6px; margin: 8px 0; border-left: 4px solid #0b3d91; }
         .info-box { background: #e2f0d9; color: #385723; border-left: 4px solid #70ad47; padding: 12px; border-radius: 6px; margin: 15px 0; font-weight: bold; }
         .error { margin-top: 20px; color: red; font-weight: bold; text-align: center; background: #fdf2f2; padding: 15px; border-radius: 8px; border: 1px solid #f5b0b0; }
         .sol-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
@@ -38,6 +39,7 @@
     <div class="card">
         <h2>1. Mathematical Discussion</h2>
         <p>The <strong>Thomas Algorithm</strong> is an optimized variant of Gaussian elimination engineered to solve tridiagonal linear equation systems of the shape \(Mx = r\).</p>
+        
         $$M = \begin{pmatrix} 
         b_1 & c_1 & 0 & \dots & 0 \\ 
         a_2 & b_2 & c_2 & \dots & 0 \\ 
@@ -45,10 +47,34 @@
         \vdots & \vdots & \vdots & \ddots & c_{n-1} \\ 
         0 & 0 & 0 & a_n & b_n 
         \end{pmatrix}$$
+
+        <p>The system is numerically stable if it satisfies the condition of strict diagonal dominance:</p>
+        $$\lvert b_i \rvert \geq \lvert a_i \rvert + \lvert c_i \rvert \quad \text{for all } i$$
     </div>
 
     <div class="card">
-        <h2>2. Interactive Matrix Calculator</h2>
+        <h2>2. Step-by-Step Worked Examples (Static Reference)</h2>
+        <div class="example-split">
+            
+            <div class="example-box">
+                <h3>Example 1: Symmetric Dominant System</h3>
+                <p>Consider a $3 \times 3$ system where:</p>
+                $$b = [2, 2, 2], \quad a = [0, -1, -1], \quad c = [-1, -1, 0], \quad r = [1, 0, 1]$$
+                <strong>Solution Set:</strong> \(X = [1.00, 1.00, 1.00]\)</p>
+            </div>
+
+            <div class="example-box">
+                <h3>Example 2: Non-Symmetric System</h3>
+                <p>Consider a $3 \times 3$ system where:</p>
+                $$b = [4, 4, 4], \quad a = [0, -1, -2], \quad c = [-2, -1, 0], \quad r = [2, 5, 2]$$
+                <strong>Solution Set:</strong> \(X = [1.50, 2.00, 1.50]\)</p>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>3. Interactive $4 \times 4$ Tridiagonal Matrix Calculator</h2>
         <form method="POST">
             <div class="tridiagonal-container">
                 <div class="matrix-row">
@@ -100,6 +126,7 @@
         {% if result %}
             <div class="card" style="margin-top: 30px; border: 1px solid #0b3d91;">
                 <h3>Full Computation Trace</h3>
+                
                 {% for step in steps %}
                     {% if step.type == 'header' %}
                         <div class="step-heading">{{ step.text }}</div>
@@ -127,9 +154,9 @@
                             {% for i in range(result['x']|length) %}
                             <tr>
                                 <td><strong>x_{{ i+1 }}</strong></td>
-                                <td>{{ result['gamma'][i] }}</td>
-                                <td>{{ result['rho'][i] }}</td>
-                                <td><span style="color:#0b3d91; font-weight:bold;">{{ result['x'][i] }}</span></td>
+                                <td>{{ "%.4f"|format(result['gamma'][i]) if i < (result['x']|length - 1) else '0.0000' }}</td>
+                                <td>{{ "%.4f"|format(result['rho'][i]) }}</td>
+                                <td><span style="color:#0b3d91; font-weight:bold;">{{ "%.4f"|format(result['x'][i]) }}</span></td>
                             </tr>
                             {% endfor %}
                         </tbody>
